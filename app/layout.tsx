@@ -28,6 +28,13 @@ export const metadata: Metadata = {
     "licorería 24 horas",
     "licores a domicilio",
   ],
+  icons: {
+    icon: [
+      { url: "/icon.svg", type: "image/svg+xml" },
+      { url: "/icon-dark-32x32.png", sizes: "32x32", type: "image/png" },
+    ],
+    apple: "/apple-icon.png",
+  },
   openGraph: {
     title: "Botando la Tapa Licors | Licorería Premium",
     description: "Donde el sabor se vuelve experiencia. Delivery nocturno, rápido y con estilo.",

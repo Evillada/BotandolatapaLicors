@@ -19,7 +19,7 @@ export function ContactSection() {
         {/* Contact buttons */}
         <div className="mb-12 flex flex-col justify-center gap-4 sm:flex-row">
           <a
-            href="https://wa.me/573001234567?text=Hola,%20quiero%20hacer%20un%20pedido"
+            href="https://wa.me/573176614939?text=Hola,%20quiero%20hacer%20un%20pedido"
             target="_blank"
             rel="noopener noreferrer"
             className="group relative overflow-hidden rounded-xl bg-neon px-10 py-5 font-bold text-background transition-all hover:shadow-xl hover:shadow-neon/30"
@@ -32,7 +32,7 @@ export function ContactSection() {
           </a>
 
           <a
-            href="tel:+573001234567"
+            href="tel:+573176614939"
             className="flex items-center justify-center gap-3 rounded-xl border-2 border-gold px-10 py-5 text-lg font-bold text-gold transition-all hover:bg-gold hover:text-background hover:shadow-xl hover:shadow-gold/30"
           >
             <Phone className="h-6 w-6" />
@@ -57,7 +57,7 @@ export function ContactSection() {
           <div className="rounded-xl border border-border bg-background p-6">
             <Phone className="mx-auto mb-3 h-8 w-8 text-gold" />
             <h3 className="mb-1 font-semibold text-foreground">Teléfono</h3>
-            <p className="text-sm text-muted-foreground">+57 300 123 4567</p>
+            <p className="text-sm text-muted-foreground">+57 317 6614939</p>
           </div>
         </div>
       </div>

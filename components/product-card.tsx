@@ -61,7 +61,7 @@ export function ProductCard({ product, index = 0 }: ProductCardProps) {
 
         <div className="flex gap-3">
           <a
-            href={`https://wa.me/573001234567?text=${whatsappMessage}`}
+            href={`https://wa.me/573176614939?text=${whatsappMessage}`}
             target="_blank"
             rel="noopener noreferrer"
             className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-neon to-neon-light px-4 py-3 font-semibold text-background transition-all duration-300 hover:shadow-xl hover:shadow-neon/40 hover:scale-[1.02]"
@@ -70,7 +70,7 @@ export function ProductCard({ product, index = 0 }: ProductCardProps) {
             <span>WhatsApp</span>
           </a>
           <a
-            href="tel:+573001234567"
+            href="tel:+573176614939"
             className="flex items-center justify-center rounded-xl border-2 border-gold/50 px-4 py-3 text-gold transition-all duration-300 hover:bg-gold hover:text-background hover:border-gold hover:shadow-lg hover:shadow-gold/30"
           >
             <Phone className="h-5 w-5" />

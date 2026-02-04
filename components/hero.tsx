@@ -82,7 +82,7 @@ export function Hero() {
           </Link>
 
           <a
-            href="https://wa.me/573001234567?text=Hola,%20quiero%20hacer%20un%20pedido"
+            href="https://wa.me/573176614939?text=Hola,%20quiero%20hacer%20un%20pedido"
             target="_blank"
             rel="noopener noreferrer"
             className="group flex items-center justify-center gap-3 rounded-xl border-2 border-neon bg-neon/10 px-10 py-4 font-semibold text-neon backdrop-blur-sm transition-all duration-300 hover:bg-neon hover:text-background hover:shadow-2xl hover:shadow-neon/40 hover:scale-105"
