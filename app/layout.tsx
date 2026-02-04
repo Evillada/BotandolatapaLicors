@@ -29,11 +29,8 @@ export const metadata: Metadata = {
     "licores a domicilio",
   ],
   icons: {
-    icon: [
-      { url: "/icon.svg", type: "image/svg+xml" },
-      { url: "/icon-dark-32x32.png", sizes: "32x32", type: "image/png" },
-    ],
-    apple: "/apple-icon.png",
+    icon: "/favicon.png",
+    apple: "/favicon.png",
   },
   openGraph: {
     title: "Botando la Tapa Licors | Licorería Premium",
