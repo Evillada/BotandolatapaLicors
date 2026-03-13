@@ -3,6 +3,8 @@
 import { usePathname, useRouter } from "next/navigation"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
+import type { SupabaseClient } from "@supabase/supabase-js"
+import type { Database } from "@/lib/supabase/types"
 import {
   LayoutDashboard,
   Package,
@@ -13,7 +15,7 @@ import {
   Menu,
   X,
 } from "lucide-react"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Toaster } from "sonner"
 
 const navItems = [
@@ -30,15 +32,23 @@ export default function AdminLayout({
 }) {
   const pathname = usePathname()
   const router = useRouter()
-  const supabase = createClient()
+  const [supabase, setSupabase] = useState<SupabaseClient<Database> | null>(null)
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
+
+  useEffect(() => {
+    try {
+      setSupabase(createClient())
+    } catch {
+      setSupabase(null)
+    }
+  }, [])
 
   if (pathname === "/admin/login") {
     return <>{children}</>
   }
 
   const handleLogout = async () => {
-    await supabase.auth.signOut()
+    if (supabase) await supabase.auth.signOut()
     router.push("/admin/login")
   }
 

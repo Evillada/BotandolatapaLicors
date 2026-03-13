@@ -1,18 +1,30 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { createClient } from "@/lib/supabase/client"
-import { Lock, Mail, Loader2, Wine } from "lucide-react"
+import type { SupabaseClient } from "@supabase/supabase-js"
+import type { Database } from "@/lib/supabase/types"
+import { Lock, Mail, Loader2, Wine, AlertCircle } from "lucide-react"
 import { toast, Toaster } from "sonner"
 
 export default function AdminLogin() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [isLoading, setIsLoading] = useState(false)
-  const supabase = createClient()
+  const [supabase, setSupabase] = useState<SupabaseClient<Database> | null>(null)
+  const [configError, setConfigError] = useState<string | null>(null)
+
+  useEffect(() => {
+    try {
+      setSupabase(createClient())
+    } catch (e) {
+      setConfigError(e instanceof Error ? e.message : "Faltan variables de entorno")
+    }
+  }, [])
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (!supabase) return
     setIsLoading(true)
 
     try {
@@ -33,6 +45,32 @@ export default function AdminLogin() {
     } finally {
       setIsLoading(false)
     }
+  }
+
+  if (configError) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+        <Toaster position="top-center" richColors />
+        <div className="w-full max-w-md bg-card border border-border rounded-2xl p-8">
+          <div className="flex items-center gap-3 text-destructive mb-4">
+            <AlertCircle className="h-8 w-8 shrink-0" />
+            <h2 className="text-lg font-semibold">Configuración requerida</h2>
+          </div>
+          <p className="text-muted-foreground text-sm whitespace-pre-line">{configError}</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (!supabase) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+        <div className="flex items-center gap-2 text-muted-foreground">
+          <Loader2 className="h-6 w-6 animate-spin" />
+          <span>Cargando...</span>
+        </div>
+      </div>
+    )
   }
 
   return (

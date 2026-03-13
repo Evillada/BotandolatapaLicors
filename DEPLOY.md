@@ -1,17 +1,27 @@
 # Despliegue en Vercel - Botando la Tapa Licors
 
-## Variables de entorno (Vercel)
+## Variables de entorno (igual en desarrollo y producción)
 
-En el proyecto de Vercel ve a **Settings → Environment Variables** y agrega:
+**Las mismas variables y los mismos valores** se usan en desarrollo (`.env.local`) y en producción (Vercel). Mismo proyecto de Supabase en ambos.
 
-| Variable | Valor | Entorno |
-|----------|--------|---------|
-| `NEXT_PUBLIC_SUPABASE_URL` | `https://kftjglskwdaaqxvduglw.supabase.co` | Production, Preview |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Tu Anon Key de Supabase | Production, Preview |
-| `SUPABASE_SERVICE_ROLE_KEY` | Tu Service Role Key de Supabase | Production, Preview |
-| `NEXT_PUBLIC_WHATSAPP_NUMBER` | `573176614939` | Production, Preview |
+| Variable | Valor | Dónde |
+|----------|--------|--------|
+| `NEXT_PUBLIC_SUPABASE_URL` | `https://kftjglskwdaaqxvduglw.supabase.co` | `.env.local` y Vercel |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Anon Key de Supabase (Dashboard → Settings → API) | `.env.local` y Vercel |
+| `SUPABASE_SERVICE_ROLE_KEY` | Service Role Key de Supabase | `.env.local` y Vercel |
+| `NEXT_PUBLIC_WHATSAPP_NUMBER` | `573176614939` | `.env.local` y Vercel |
 
-**Importante:** Nunca subas `SUPABASE_SERVICE_ROLE_KEY` al repositorio. Solo en Vercel (y en `.env.local` en local, que está en `.gitignore`).
+### Desarrollo local
+
+1. En la carpeta **`premium-liquor-landing-page`** crea o edita **`.env.local`** con las 4 variables de la tabla.
+2. Ejecuta desde esa misma carpeta: `pnpm dev`.
+3. Si el login muestra "Configuración requerida", revisa que los nombres de las variables sean exactos (sin espacios) y que el archivo esté en `premium-liquor-landing-page/.env.local`.
+
+### Producción (Vercel)
+
+En el proyecto de Vercel: **Settings → Environment Variables** → agrega las mismas 4 variables para **Production** (y opcionalmente Preview).
+
+**Importante:** Nunca subas `SUPABASE_SERVICE_ROLE_KEY` al repositorio. Solo en `.env.local` (local) y en Vercel (producción).
 
 ---
 
@@ -49,11 +59,41 @@ En el proyecto de Vercel ve a **Settings → Environment Variables** y agrega:
 
 ---
 
+## Si el login o la base de datos no funcionan en Vercel
+
+### 1. Variables de entorno y redeploy
+
+- En Vercel → tu proyecto → **Settings → Environment Variables**.
+- Debe haber **estas 4** con el **mismo nombre exacto**, y deben estar asignadas al entorno **Production** (marca el checkbox Production):
+  - `NEXT_PUBLIC_SUPABASE_URL`
+  - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+  - `SUPABASE_SERVICE_ROLE_KEY`
+  - `NEXT_PUBLIC_WHATSAPP_NUMBER`
+- Si acabas de añadirlas o las cambiaste: **Deployments → los tres puntos del último deploy → Redeploy**. Sin redeploy, la producción sigue usando los valores anteriores (o vacíos).
+
+### 2. Configurar la URL de producción en Supabase (obligatorio para el login)
+
+Supabase solo acepta login desde URLs que tú autorizas. Si no configuras la URL de producción, el login en Vercel puede fallar o no guardar la sesión.
+
+1. Entra a [Supabase Dashboard](https://supabase.com/dashboard) → tu proyecto.
+2. **Authentication** (menú izquierdo) → **URL Configuration**.
+3. **Site URL:** pon la URL principal de tu sitio, por ejemplo:
+   - `https://botandolatapalicors.com`
+   - o si solo usas Vercel: `https://tu-proyecto.vercel.app`
+4. **Redirect URLs:** añade (una por línea) las URLs que uses:
+   - `https://botandolatapalicors.com/**`
+   - `https://*.vercel.app/**`
+   (El `**` permite cualquier ruta bajo ese dominio.)
+5. Guarda los cambios.
+
+Con esto, la base de datos y el login deberían funcionar en producción. Si sigue fallando, abre la consola del navegador (F12 → Console) en `/admin/login`, intenta iniciar sesión y revisa si sale algún error de red o de Supabase y compártelo.
+
+---
+
 ## Después del deploy
 
 1. **Probar la tienda:** Abre la URL de Vercel, verifica catálogo, carrito y envío por WhatsApp.
-2. **Probar el admin:** Entra a `https://tu-dominio.vercel.app/admin/login` con el usuario admin.
-3. **Supabase (opcional):** En Supabase → Authentication → URL Configuration, añade la URL de producción en "Redirect URLs" si usas flujos con redirect.
+2. **Probar el admin:** Entra a `https://tu-dominio.vercel.app/admin/login` (o tu dominio) con el usuario admin.
 
 ---
 
