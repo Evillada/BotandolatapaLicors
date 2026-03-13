@@ -9,6 +9,8 @@ import { Promotions } from "@/components/promotions"
 import { ContactSection } from "@/components/contact-section"
 import { Footer } from "@/components/footer"
 import { WhatsAppButton } from "@/components/whatsapp-button"
+import { CartButton, CartDrawer } from "@/components/cart"
+import { Toaster } from "sonner"
 
 export default function Home() {
   const [isVerified, setIsVerified] = useState(false)
@@ -25,6 +27,7 @@ export default function Home() {
 
   return (
     <main className="min-h-screen bg-background">
+      <Toaster position="top-center" richColors />
       {showModal && <AgeVerificationModal onVerify={handleVerify} onDeny={handleDeny} />}
 
       {isVerified && (
@@ -36,6 +39,8 @@ export default function Home() {
           <ContactSection />
           <Footer />
           <WhatsAppButton />
+          <CartButton />
+          <CartDrawer />
         </>
       )}
     </main>

@@ -1,10 +1,25 @@
 "use client"
 
-import { products } from "@/data/products"
+import { useEffect, useState } from "react"
 import { ProductCard } from "@/components/product-card"
 import { Sparkles } from "lucide-react"
+import type { Product } from "@/lib/supabase/types"
 
 export function Catalog() {
+  const [products, setProducts] = useState<Product[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+
+  useEffect(() => {
+    fetch("/api/products?limit=50")
+      .then((res) => res.json())
+      .then((data) => {
+        const list = data.data ?? []
+        setProducts(list.filter((p: Product) => !p.is_promotion))
+      })
+      .catch(() => setProducts([]))
+      .finally(() => setIsLoading(false))
+  }, [])
+
   return (
     <section id="catalogo" className="relative bg-background px-4 py-24 overflow-hidden">
       <div className="noise-texture absolute inset-0 pointer-events-none" />
@@ -35,11 +50,21 @@ export function Catalog() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {products.map((product, index) => (
-            <ProductCard key={product.id} product={product} index={index} />
-          ))}
-        </div>
+        {isLoading ? (
+          <div className="flex justify-center py-16">
+            <div className="h-10 w-10 animate-spin rounded-full border-2 border-gold border-t-transparent" />
+          </div>
+        ) : products.length === 0 ? (
+          <p className="text-center text-muted-foreground py-16">
+            No hay productos en el catálogo por el momento.
+          </p>
+        ) : (
+          <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {products.map((product, index) => (
+              <ProductCard key={product.id} product={product} index={index} />
+            ))}
+          </div>
+        )}
       </div>
     </section>
   )

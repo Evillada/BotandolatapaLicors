@@ -1,5 +1,5 @@
 import type React from "react"
-import type { Metadata } from "next"
+import type { Metadata, Viewport } from "next"
 import { Poppins, Montserrat } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
 import "./globals.css"
@@ -15,6 +15,12 @@ const montserrat = Montserrat({
   weight: ["400", "500", "600", "700", "800", "900"],
   variable: "--font-montserrat",
 })
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 5,
+}
 
 export const metadata: Metadata = {
   title: "Botando la Tapa Licors | Licorería Premium en Medellín",
@@ -39,8 +45,7 @@ export const metadata: Metadata = {
     locale: "es_CO",
   },
   robots: "index, follow",
-  viewport: "width=device-width, initial-scale=1, maximum-scale=5",
-    generator: 'v0.app'
+  generator: 'v0.app'
 }
 
 export default function RootLayout({
