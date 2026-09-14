@@ -1,8 +1,8 @@
 "use client"
 
 import { useEffect, useState, useRef } from "react"
-import { Plus, Pencil, Trash2, Search, Loader2, Upload, X } from "lucide-react"
-import type { Product, ProductInsert } from "@/lib/supabase/types"
+import { Plus, Pencil, Trash2, Search, Loader2, Upload, X, Check } from "lucide-react"
+import type { Category, Product, ProductInsert } from "@/lib/supabase/types"
 import { toast } from "sonner"
 
 type FormState = {
@@ -37,6 +37,7 @@ const emptyForm: FormState = {
 
 export default function AdminProducts() {
   const [products, setProducts] = useState<Product[]>([])
+  const [categories, setCategories] = useState<Category[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [search, setSearch] = useState("")
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -45,9 +46,14 @@ export default function AdminProducts() {
   const [isUploading, setIsUploading] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [formData, setFormData] = useState<FormState>(emptyForm)
+  const [editingPriceId, setEditingPriceId] = useState<string | null>(null)
+  const [savingPriceId, setSavingPriceId] = useState<string | null>(null)
+  const [editingStockId, setEditingStockId] = useState<string | null>(null)
+  const [savingStockId, setSavingStockId] = useState<string | null>(null)
 
   useEffect(() => {
     fetchProducts()
+    fetchCategories()
   }, [])
 
   const fetchProducts = async () => {
@@ -59,6 +65,16 @@ export default function AdminProducts() {
       toast.error("Error al cargar productos")
     } finally {
       setIsLoading(false)
+    }
+  }
+
+  const fetchCategories = async () => {
+    try {
+      const res = await fetch("/api/categories?all=true")
+      const data = await res.json()
+      setCategories(data.data || [])
+    } catch {
+      // silent — el select quedará vacío pero el campo de texto funciona
     }
   }
 
@@ -155,6 +171,48 @@ export default function AdminProducts() {
       fetchProducts()
     } catch (error) {
       toast.error("Error al eliminar el producto")
+    }
+  }
+
+  const savePriceInline = async (id: string, rawValue: string, previousPrice: number) => {
+    const newPrice = Number(rawValue)
+    setEditingPriceId(null)
+    if (isNaN(newPrice) || newPrice < 0 || newPrice === previousPrice) return
+    setSavingPriceId(id)
+    try {
+      const res = await fetch(`/api/products/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ price: newPrice }),
+      })
+      if (!res.ok) throw new Error()
+      setProducts((prev) => prev.map((p) => (p.id === id ? { ...p, price: newPrice } : p)))
+      toast.success("Precio actualizado")
+    } catch {
+      toast.error("Error al actualizar el precio")
+    } finally {
+      setSavingPriceId(null)
+    }
+  }
+
+  const saveStockInline = async (id: string, rawValue: string, previousStock: number) => {
+    const newStock = Math.max(0, Math.floor(Number(rawValue)))
+    setEditingStockId(null)
+    if (isNaN(newStock) || newStock === previousStock) return
+    setSavingStockId(id)
+    try {
+      const res = await fetch(`/api/products/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ stock: newStock }),
+      })
+      if (!res.ok) throw new Error()
+      setProducts((prev) => prev.map((p) => (p.id === id ? { ...p, stock: newStock } : p)))
+      toast.success("Stock actualizado")
+    } catch {
+      toast.error("Error al actualizar el stock")
+    } finally {
+      setSavingStockId(null)
     }
   }
 
@@ -284,16 +342,74 @@ export default function AdminProducts() {
                     {product.category}
                   </td>
                   <td className="py-4 px-4">
-                    <p className="font-medium text-foreground">
-                      ${product.price.toLocaleString("es-CO")}
-                    </p>
-                    {product.original_price && (
-                      <p className="text-sm text-muted-foreground line-through">
-                        ${product.original_price.toLocaleString("es-CO")}
+                    {savingPriceId === product.id ? (
+                      <div className="flex items-center gap-1.5">
+                        <Loader2 className="h-4 w-4 animate-spin text-gold" />
+                        <span className="text-sm text-muted-foreground">Guardando...</span>
+                      </div>
+                    ) : editingPriceId === product.id ? (
+                      <input
+                        type="number"
+                        autoFocus
+                        min={0}
+                        step={1000}
+                        defaultValue={product.price}
+                        onBlur={(e) => savePriceInline(product.id, e.target.value, product.price)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") e.currentTarget.blur()
+                          if (e.key === "Escape") setEditingPriceId(null)
+                        }}
+                        className="w-32 px-2 py-1 rounded-md border border-gold bg-background text-foreground text-sm font-medium focus:outline-none focus:ring-2 focus:ring-gold"
+                      />
+                    ) : (
+                      <div>
+                        <p
+                          onClick={() => setEditingPriceId(product.id)}
+                          className="font-medium text-foreground cursor-pointer hover:text-gold transition-colors group flex items-center gap-1"
+                          title="Click para editar precio"
+                        >
+                          ${product.price.toLocaleString("es-CO")}
+                          <Pencil className="h-3 w-3 opacity-0 group-hover:opacity-60 transition-opacity flex-shrink-0" />
+                        </p>
+                        {product.original_price && (
+                          <p className="text-sm text-muted-foreground line-through">
+                            ${product.original_price.toLocaleString("es-CO")}
+                          </p>
+                        )}
+                      </div>
+                    )}
+                  </td>
+                  <td className="py-4 px-4">
+                    {savingStockId === product.id ? (
+                      <div className="flex items-center gap-1.5">
+                        <Loader2 className="h-4 w-4 animate-spin text-gold" />
+                        <span className="text-sm text-muted-foreground">Guardando...</span>
+                      </div>
+                    ) : editingStockId === product.id ? (
+                      <input
+                        type="number"
+                        autoFocus
+                        min={0}
+                        step={1}
+                        defaultValue={product.stock}
+                        onBlur={(e) => saveStockInline(product.id, e.target.value, product.stock)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") e.currentTarget.blur()
+                          if (e.key === "Escape") setEditingStockId(null)
+                        }}
+                        className="w-20 px-2 py-1 rounded-md border border-gold bg-background text-foreground text-sm font-medium focus:outline-none focus:ring-2 focus:ring-gold"
+                      />
+                    ) : (
+                      <p
+                        onClick={() => setEditingStockId(product.id)}
+                        className="font-medium text-foreground cursor-pointer hover:text-gold transition-colors group flex items-center gap-1"
+                        title="Click para editar stock"
+                      >
+                        {product.stock}
+                        <Pencil className="h-3 w-3 opacity-0 group-hover:opacity-60 transition-opacity flex-shrink-0" />
                       </p>
                     )}
                   </td>
-                  <td className="py-4 px-4 text-foreground">{product.stock}</td>
                   <td className="py-4 px-4">
                     <span
                       className={`inline-flex px-2.5 py-1 rounded-full text-xs font-medium ${
@@ -420,15 +536,19 @@ export default function AdminProducts() {
                     }
                     className="w-full px-4 py-2.5 rounded-lg border border-border bg-background text-foreground focus:border-gold focus:outline-none focus:ring-1 focus:ring-gold"
                   >
-                    <option value="">Seleccionar...</option>
-                    <option value="Whisky">Whisky</option>
-                    <option value="Vodka">Vodka</option>
-                    <option value="Tequila">Tequila</option>
-                    <option value="Gin">Gin</option>
-                    <option value="Ron">Ron</option>
-                    <option value="Champagne">Champagne</option>
-                    <option value="Aguardiente">Aguardiente</option>
+                    <option value="">Sin categoría</option>
+                    {categories.map((cat) => (
+                      <option key={cat.id} value={cat.name}>
+                        {cat.name}{!cat.active ? " (oculta)" : ""}
+                      </option>
+                    ))}
                   </select>
+                  {categories.length === 0 && (
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      Crea categorías primero en{" "}
+                      <a href="/admin/categories" className="text-gold underline">Categorías</a>
+                    </p>
+                  )}
                 </div>
 
                 <div>

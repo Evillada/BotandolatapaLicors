@@ -1,18 +1,30 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { ChevronDown, MessageCircle, Sparkles } from "lucide-react"
 import Link from "next/link"
 
 export function Hero() {
-  const [scrollY, setScrollY] = useState(0)
   const [mounted, setMounted] = useState(false)
+  const parallaxRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     setMounted(true)
-    const handleScroll = () => setScrollY(window.scrollY)
+    let rafId: number | null = null
+    const handleScroll = () => {
+      if (rafId !== null) return
+      rafId = requestAnimationFrame(() => {
+        if (parallaxRef.current) {
+          parallaxRef.current.style.transform = `translateY(${window.scrollY * 0.2}px)`
+        }
+        rafId = null
+      })
+    }
     window.addEventListener("scroll", handleScroll, { passive: true })
-    return () => window.removeEventListener("scroll", handleScroll)
+    return () => {
+      window.removeEventListener("scroll", handleScroll)
+      if (rafId !== null) cancelAnimationFrame(rafId)
+    }
   }, [])
 
   return (
@@ -21,10 +33,10 @@ export function Hero() {
 
       <div className="vignette absolute inset-0 pointer-events-none" />
 
-      <div className="absolute inset-0" style={{ transform: `translateY(${scrollY * 0.2}px)` }}>
-        <div className="absolute right-0 top-0 h-[500px] w-[500px] rounded-full bg-gold/15 blur-[150px]" />
-        <div className="absolute bottom-0 left-0 h-[400px] w-[400px] rounded-full bg-purple-club/30 blur-[120px]" />
-        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 h-[600px] w-[600px] rounded-full bg-neon/5 blur-[200px]" />
+      <div ref={parallaxRef} className="absolute inset-0">
+        <div className="absolute right-0 top-0 h-[200px] w-[200px] sm:h-[500px] sm:w-[500px] rounded-full bg-gold/15 blur-[60px] sm:blur-[150px]" />
+        <div className="absolute bottom-0 left-0 h-[160px] w-[160px] sm:h-[400px] sm:w-[400px] rounded-full bg-purple-club/30 blur-[50px] sm:blur-[120px]" />
+        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 h-[200px] w-[200px] sm:h-[600px] sm:w-[600px] rounded-full bg-neon/5 blur-[80px] sm:blur-[200px]" />
       </div>
 
       <div className="absolute inset-0 bg-[linear-gradient(rgba(199,168,107,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(199,168,107,0.02)_1px,transparent_1px)] bg-[size:80px_80px]" />
@@ -39,35 +51,34 @@ export function Hero() {
         </div>
 
         <h1
-          className={`mb-8 text-center font-serif text-5xl font-black leading-none tracking-tight text-foreground sm:text-7xl md:text-8xl lg:text-9xl ${mounted ? "animate-fade-in" : "opacity-0"}`}
+          className={`mb-6 text-center font-serif text-4xl font-black leading-tight tracking-tight text-foreground sm:text-6xl md:text-8xl lg:text-9xl ${mounted ? "animate-fade-in" : "opacity-0"}`}
           style={{ animationDelay: "0.1s" }}
         >
-          <span className="block text-balance mb-2">Botando la Tapa</span>
+          <span className="block text-balance mb-1">Botando la Tapa</span>
           <span className="block relative">
             <span className="bg-gradient-to-r from-gold via-gold-light to-gold bg-clip-text text-transparent drop-shadow-[0_0_30px_rgba(199,168,107,0.5)]">
               LICORS
             </span>
-            {/* Neon underline accent */}
-            <span className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-32 h-1 bg-gradient-to-r from-transparent via-neon to-transparent rounded-full" />
+            <span className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-24 sm:w-32 h-1 bg-gradient-to-r from-transparent via-neon to-transparent rounded-full" />
           </span>
         </h1>
 
         <p
-          className={`mb-4 max-w-2xl text-center text-xl font-light text-foreground/90 sm:text-2xl md:text-3xl ${mounted ? "animate-fade-in" : "opacity-0"}`}
+          className={`mb-3 max-w-2xl text-center text-lg font-light text-foreground/90 sm:text-2xl md:text-3xl ${mounted ? "animate-fade-in" : "opacity-0"}`}
           style={{ animationDelay: "0.2s" }}
         >
           Donde el sabor se vuelve <span className="text-gold font-medium">experiencia</span>
         </p>
 
         <p
-          className={`mb-12 text-center text-muted-foreground tracking-wide ${mounted ? "animate-fade-in" : "opacity-0"}`}
+          className={`mb-10 text-center text-sm sm:text-base text-muted-foreground tracking-wide ${mounted ? "animate-fade-in" : "opacity-0"}`}
           style={{ animationDelay: "0.3s" }}
         >
           Delivery nocturno • Rápido • Con estilo
         </p>
 
         <div
-          className={`flex flex-col gap-5 sm:flex-row ${mounted ? "animate-fade-in" : "opacity-0"}`}
+          className={`flex flex-col items-center gap-4 sm:flex-row sm:gap-5 ${mounted ? "animate-fade-in" : "opacity-0"}`}
           style={{ animationDelay: "0.4s" }}
         >
           <Link

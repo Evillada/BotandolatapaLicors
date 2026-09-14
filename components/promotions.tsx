@@ -1,5 +1,6 @@
 "use client"
 
+import Image from "next/image"
 import { useEffect, useState } from "react"
 import { Flame, MessageCircle, Zap } from "lucide-react"
 import type { Product } from "@/lib/supabase/types"
@@ -11,24 +12,21 @@ export function Promotions() {
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
-    fetch("/api/products?limit=50")
+    fetch("/api/products?limit=20&promotion=true")
       .then((res) => res.json())
-      .then((data) => {
-        const list = data.data ?? []
-        setPromotions(list.filter((p: Product) => p.is_promotion))
-      })
+      .then((data) => setPromotions(data.data ?? []))
       .catch(() => setPromotions([]))
       .finally(() => setIsLoading(false))
   }, [])
 
   return (
-    <section className="relative bg-background px-4 py-24 overflow-hidden">
+    <section className="relative bg-background px-4 py-12 sm:py-24 overflow-hidden">
       <div className="noise-texture absolute inset-0 pointer-events-none" />
 
       <div className="pointer-events-none absolute inset-0">
-        <div className="absolute right-0 top-0 h-[600px] w-[600px] rounded-full bg-neon/15 blur-[180px]" />
-        <div className="absolute left-0 bottom-0 h-[500px] w-[500px] rounded-full bg-purple-club/40 blur-[150px]" />
-        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 h-[400px] w-[400px] rounded-full bg-gold/5 blur-[100px]" />
+        <div className="absolute right-0 top-0 h-[180px] w-[180px] sm:h-[600px] sm:w-[600px] rounded-full bg-neon/15 blur-[60px] sm:blur-[180px]" />
+        <div className="absolute left-0 bottom-0 h-[150px] w-[150px] sm:h-[500px] sm:w-[500px] rounded-full bg-purple-club/40 blur-[50px] sm:blur-[150px]" />
+        <div className="hidden sm:block absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 h-[400px] w-[400px] rounded-full bg-gold/5 blur-[100px]" />
       </div>
 
       <div className="relative mx-auto max-w-7xl">
@@ -78,14 +76,16 @@ export function Promotions() {
                   </div>
 
                   <div className="flex gap-5">
-                    <div className="h-28 w-28 flex-shrink-0 overflow-hidden rounded-xl bg-gradient-to-br from-muted/50 to-muted/20 p-1">
-                      <div className="h-full w-full overflow-hidden rounded-lg">
-                        <img
-                          src={promo.image_url || "/placeholder.svg"}
-                          alt={promo.name}
-                          className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
-                        />
-                      </div>
+                      <div className="relative h-28 w-28 flex-shrink-0 overflow-hidden rounded-xl bg-gradient-to-br from-muted/50 to-muted/20">
+                      <Image
+                        src={promo.image_url || "/placeholder.svg"}
+                        alt={promo.name}
+                        fill
+                        sizes="112px"
+                        quality={90}
+                        className="object-cover rounded-xl transition-transform duration-500 group-hover:scale-110"
+                        loading="lazy"
+                      />
                     </div>
 
                     <div className="flex flex-col justify-center">

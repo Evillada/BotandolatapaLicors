@@ -1,10 +1,10 @@
 import { cookies } from 'next/headers'
 import { createServerClient } from '@supabase/ssr'
-import { createClient } from '@supabase/supabase-js'
 
 /**
  * Verifica si la petición actual viene de un usuario admin.
  * Usar solo en API routes (Route Handlers).
+ * Usa fetch directo con service role para evitar problemas de RLS recursivo.
  */
 export async function isAdminRequest(): Promise<boolean> {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL
@@ -13,24 +13,37 @@ export async function isAdminRequest(): Promise<boolean> {
   if (!url || !anonKey || !serviceKey) return false
 
   const cookieStore = await cookies()
-  const supabaseAuth = createServerClient(url, anonKey, {
+  const supabase = createServerClient(url, anonKey, {
     cookies: {
-      getAll() {
-        return cookieStore.getAll()
-      },
+      getAll() { return cookieStore.getAll() },
       setAll() {},
     },
   })
 
-  const { data: { user } } = await supabaseAuth.auth.getUser()
-  if (!user) return false
+  // Leer sesión de cookies (sin llamada de red; middleware ya validó el JWT)
+  const { data: { session } } = await supabase.auth.getSession()
+  if (!session?.user?.id) return false
 
-  const supabaseAdmin = createClient(url, serviceKey, { auth: { persistSession: false } })
-  const { data: adminUser } = await supabaseAdmin
-    .from('admin_users')
-    .select('id')
-    .eq('id', user.id)
-    .maybeSingle()
+  const userId = session.user.id
+  const base = url.replace(/\/$/, '')
 
-  return !!adminUser
+  try {
+    const res = await fetch(
+      `${base}/rest/v1/admin_users?id=eq.${userId}&select=id&limit=1`,
+      {
+        headers: {
+          apikey: serviceKey,
+          Authorization: `Bearer ${serviceKey}`,
+        },
+        cache: 'no-store',
+      }
+    )
+    if (res.ok) {
+      const rows = await res.json()
+      return Array.isArray(rows) && rows.length > 0
+    }
+  } catch (err) {
+    console.error('[isAdminRequest] fetch error:', err)
+  }
+  return false
 }

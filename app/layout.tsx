@@ -23,6 +23,7 @@ export const viewport: Viewport = {
 }
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://botandolatapalicors.com"),
   title: "Botando la Tapa Licors | Licorería Premium en Medellín",
   description:
     "Licorería premium con delivery nocturno rápido en Medellín. Whisky, vodka, tequila, ron y más. Atención 24/7. Experiencia de compra exclusiva.",
@@ -43,9 +44,25 @@ export const metadata: Metadata = {
     description: "Donde el sabor se vuelve experiencia. Delivery nocturno, rápido y con estilo.",
     type: "website",
     locale: "es_CO",
+    url: "https://botandolatapalicors.com",
+    siteName: "Botando la Tapa Licors",
+    images: [
+      {
+        url: "/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "Botando la Tapa Licors — Licorería Premium en Medellín",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Botando la Tapa Licors | Licorería Premium",
+    description: "Donde el sabor se vuelve experiencia. Delivery nocturno, rápido y con estilo.",
+    images: ["/og-image.png"],
   },
   robots: "index, follow",
-  generator: 'v0.app'
+  generator: "v0.app",
 }
 
 export default function RootLayout({

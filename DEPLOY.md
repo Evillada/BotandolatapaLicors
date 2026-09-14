@@ -53,6 +53,31 @@ En el proyecto de Vercel: **Settings → Environment Variables** → agrega las 
   - Ver todos los pedidos y cambiar su estado.
   - Usar `?all=true` en productos.
   - Subir imágenes (`/api/upload`).
+
+### Si el login funciona pero te devuelve al login o a la web (sin abrir el panel)
+
+Tu usuario **debe estar en la tabla `admin_users`** en Supabase. Si no está, el middleware te redirige y no entras al panel.
+
+1. Entra a [Supabase Dashboard](https://supabase.com/dashboard) → tu proyecto.
+2. **Authentication** → **Users** → localiza el usuario con el que inicias sesión (ej. sierrita1324@gmail.com) y **copia el User UID** (UUID).
+3. **SQL Editor** → Nueva query → pega y **reemplaza** `TU_USER_UID` y `tu@email.com` por el UID y el email:
+
+```sql
+INSERT INTO admin_users (id, email, role)
+VALUES ('TU_USER_UID', 'tu@email.com', 'admin')
+ON CONFLICT (id) DO NOTHING;
+```
+
+4. Ejecuta (Run). Vuelve a entrar a `/admin/login` e inicia sesión; deberías entrar al panel.
+
+### Si en los logs de Vercel aparece error 42P17 o "no encontrada" en `/api/products`
+
+Ese error significa que en Supabase **falta la tabla `products` o alguna de sus columnas**.
+
+1. Entra a [Supabase Dashboard](https://supabase.com/dashboard) → tu proyecto → **SQL Editor**.
+2. Si **no** has creado antes la base con el schema del proyecto: ejecuta el contenido de **`supabase/schema.sql`** (crea todas las tablas).
+3. Si ya tenías la tabla pero falla la API: ejecuta **`supabase/fix-products-table.sql`** para añadir las columnas que falten.
+
 - **Claves:** `SUPABASE_SERVICE_ROLE_KEY` solo se usa en el servidor (API routes y middleware). No se expone al cliente.
 - **Validación:** Los bodies de las peticiones se validan y sanitizan en productos y pedidos.
 - **RLS en Supabase:** Las políticas de la base de datos siguen activas; la API usa service role solo donde hace falta.

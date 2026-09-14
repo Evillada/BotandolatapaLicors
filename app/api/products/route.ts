@@ -1,14 +1,9 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
 import { isAdminRequest } from '@/lib/auth-api'
+import { dbInsert, dbSelect } from '@/lib/supabase/service-role'
 import type { ProductInsert } from '@/lib/supabase/types'
 
-function getServiceRoleClient() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY
-  if (!url || !key) throw new Error('Missing Supabase config')
-  return createClient(url, key, { auth: { persistSession: false } })
-}
+const PRODUCT_COLUMNS = 'id,name,description,price,original_price,discount,category_id,category,size,image_url,badge,stock,active,is_promotion,created_at,updated_at'
 
 export async function GET(request: Request) {
   try {
@@ -19,42 +14,19 @@ export async function GET(request: Request) {
     const limit = Math.min(parseInt(searchParams.get('limit') || '50', 10) || 50, 200)
     const offset = Math.max(0, parseInt(searchParams.get('offset') || '0', 10))
 
-    const isAdmin = await isAdminRequest()
-    const all = allParam && isAdmin
+    const isAdmin = allParam && (await isAdminRequest())
 
-    const supabase = getServiceRoleClient()
+    const parts: string[] = [`select=${PRODUCT_COLUMNS}`, `order=created_at.desc`, `limit=${limit}`, `offset=${offset}`]
 
-    let query = supabase
-      .from('products')
-      .select('*', { count: 'exact' })
-      .order('created_at', { ascending: false })
-      .range(offset, offset + limit - 1)
+    if (category) parts.push(`category=eq.${encodeURIComponent(category)}`)
+    if (promotion === 'true') parts.push(`is_promotion=eq.true`)
+    if (!isAdmin) parts.push(`active=eq.true`)
 
-    if (category) {
-      query = query.eq('category', category)
-    }
+    const data = await dbSelect('products', parts.join('&'))
 
-    if (promotion === 'true') {
-      query = query.eq('is_promotion', true)
-    }
-
-    if (!all) {
-      query = query.eq('active', true)
-    }
-
-    const { data, error, count } = await query
-
-    if (error) {
-      console.error('Supabase GET products error:', error)
-      return NextResponse.json(
-        { error: error.message || 'Error al cargar productos' },
-        { status: 500 }
-      )
-    }
-
-    return NextResponse.json({ data: data ?? [], count: count ?? 0 })
+    return NextResponse.json({ data, count: data.length })
   } catch (error) {
-    console.error('Error fetching products:', error)
+    console.error('[GET /api/products]', error)
     return NextResponse.json(
       { error: error instanceof Error ? error.message : 'Error interno' },
       { status: 500 }
@@ -101,37 +73,17 @@ export async function POST(request: Request) {
     const body = sanitizeProductInsert(raw as Record<string, unknown>)
 
     if (!body.name) {
-      return NextResponse.json(
-        { error: 'El nombre es obligatorio' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'El nombre es obligatorio' }, { status: 400 })
     }
     if (body.price < 0) {
-      return NextResponse.json(
-        { error: 'Precio inválido' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'Precio inválido' }, { status: 400 })
     }
 
-    const supabase = getServiceRoleClient()
-
-    const { data, error } = await supabase
-      .from('products')
-      .insert(body)
-      .select()
-      .single()
-
-    if (error) {
-      console.error('Supabase POST product error:', error)
-      return NextResponse.json(
-        { error: error.message || 'Error al crear el producto' },
-        { status: 500 }
-      )
-    }
+    const data = await dbInsert('products', body as unknown as Record<string, unknown>)
 
     return NextResponse.json(data, { status: 201 })
   } catch (error) {
-    console.error('Error creating product:', error)
+    console.error('[POST /api/products]', error)
     return NextResponse.json(
       { error: error instanceof Error ? error.message : 'Error interno' },
       { status: 500 }

@@ -1,29 +1,21 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
 import { isAdminRequest } from '@/lib/auth-api'
+import { dbSelect, dbUpdate, dbDelete } from '@/lib/supabase/service-role'
 import type { OrderUpdate } from '@/lib/supabase/types'
 
-function getServiceRoleClient() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY
-  if (!url || !key) throw new Error('Missing Supabase config')
-  return createClient(url, key, { auth: { persistSession: false } })
-}
-
 export async function GET(
-  request: Request,
+  _request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const admin = await isAdminRequest()
     if (!admin) return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
     const { id } = await params
-    const supabase = getServiceRoleClient()
-    const { data, error } = await supabase.from('orders').select('*').eq('id', id).single()
-    if (error) return NextResponse.json({ error: 'Order not found' }, { status: 404 })
-    return NextResponse.json(data)
+    const rows = await dbSelect('orders', `id=eq.${encodeURIComponent(id)}&limit=1`)
+    if (!rows[0]) return NextResponse.json({ error: 'Order not found' }, { status: 404 })
+    return NextResponse.json(rows[0])
   } catch (error) {
-    console.error('Error fetching order:', error)
+    console.error('[GET /api/orders/[id]]', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
@@ -37,36 +29,32 @@ export async function PATCH(
     if (!admin) return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
     const { id } = await params
     const body: OrderUpdate = await request.json()
-    const supabase = getServiceRoleClient()
-    const { data, error } = await supabase.from('orders').update(body).eq('id', id).select().single()
-    if (error) {
-      console.error('Supabase error:', error)
-      return NextResponse.json({ error: error.message }, { status: 500 })
-    }
+    const data = await dbUpdate('orders', id, body as Record<string, unknown>)
     return NextResponse.json(data)
   } catch (error) {
-    console.error('Error updating order:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    console.error('[PATCH /api/orders/[id]]', error)
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : 'Internal server error' },
+      { status: 500 }
+    )
   }
 }
 
 export async function DELETE(
-  request: Request,
+  _request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const admin = await isAdminRequest()
     if (!admin) return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
     const { id } = await params
-    const supabase = getServiceRoleClient()
-    const { error } = await supabase.from('orders').delete().eq('id', id)
-    if (error) {
-      console.error('Supabase error:', error)
-      return NextResponse.json({ error: error.message }, { status: 500 })
-    }
+    await dbDelete('orders', id)
     return NextResponse.json({ success: true })
   } catch (error) {
-    console.error('Error deleting order:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    console.error('[DELETE /api/orders/[id]]', error)
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : 'Internal server error' },
+      { status: 500 }
+    )
   }
 }

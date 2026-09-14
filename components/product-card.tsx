@@ -1,5 +1,6 @@
 "use client"
 
+import Image from "next/image"
 import { MessageCircle, Phone } from "lucide-react"
 import { AddToCartButton } from "@/components/cart"
 import type { Product as SupabaseProduct } from "@/lib/supabase/types"
@@ -46,7 +47,7 @@ export function ProductCard({ product, index = 0 }: ProductCardProps) {
   return (
     <div
       className="group relative overflow-hidden rounded-2xl border border-border/50 bg-gradient-to-b from-card to-background transition-all duration-500 hover:border-gold/60 hover:shadow-2xl hover:shadow-gold/20 hover:-translate-y-2 animate-fade-in light-sweep"
-      style={{ animationDelay: `${index * 0.1}s` }}
+      style={{ animationDelay: `${Math.min(index * 0.06, 0.36)}s` }}
     >
       <div className="absolute inset-0 opacity-0 transition-opacity duration-500 group-hover:opacity-100 pointer-events-none">
         <div className="absolute inset-0 rounded-2xl ring-2 ring-inset ring-gold/50" />
@@ -54,10 +55,14 @@ export function ProductCard({ product, index = 0 }: ProductCardProps) {
       </div>
 
       <div className="relative aspect-[4/5] overflow-hidden bg-gradient-to-b from-muted/30 to-muted/10">
-        <img
+        <Image
           src={imageUrl || "/placeholder.svg"}
           alt={product.name}
-          className="h-full w-full object-cover object-center transition-transform duration-700 group-hover:scale-110"
+          fill
+          sizes="(max-width: 640px) 75vw, (max-width: 1024px) 50vw, 25vw"
+          quality={90}
+          className="object-cover object-center transition-transform duration-700 group-hover:scale-110"
+          loading={index < 4 ? "eager" : "lazy"}
         />
         <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent opacity-60" />
 

@@ -1,12 +1,12 @@
 "use client"
 
-import { Clock, Shield, Headphones, Gem, Sparkles } from "lucide-react"
+import { Clock, Shield, Headphones, Gem, Sparkles, MapPin } from "lucide-react"
 
 const features = [
   {
     icon: Clock,
     title: "Entregas Rápidas",
-    description: "Delivery en menos de 45 minutos en toda la ciudad",
+    description: "Hacemos domicilio en Medellín y Área Metropolitana",
     gradient: "from-gold/30 to-gold/10",
   },
   {
@@ -80,6 +80,16 @@ export function PremiumFeatures() {
               <div className="absolute bottom-0 left-1/2 -translate-x-1/2 h-1 w-0 bg-gradient-to-r from-gold/0 via-gold to-gold/0 rounded-full transition-all duration-500 group-hover:w-16" />
             </div>
           ))}
+        </div>
+
+        {/* Delivery coverage note */}
+        <div className="mt-12 flex items-center justify-center gap-3">
+          <div className="h-px flex-1 max-w-[80px] bg-gradient-to-r from-transparent to-gold/30" />
+          <div className="flex items-center gap-2 rounded-full border border-gold/30 bg-gold/5 px-5 py-2.5 text-sm text-muted-foreground">
+            <MapPin className="h-4 w-4 text-gold flex-shrink-0" />
+            <span>Hacemos domicilio en <span className="text-gold font-semibold">Medellín y Área Metropolitana</span></span>
+          </div>
+          <div className="h-px flex-1 max-w-[80px] bg-gradient-to-l from-transparent to-gold/30" />
         </div>
       </div>
     </section>

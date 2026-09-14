@@ -17,6 +17,7 @@ export interface Database {
           name: string
           slug: string
           icon: string | null
+          active: boolean
           created_at: string
         }
         Insert: {
@@ -24,6 +25,7 @@ export interface Database {
           name: string
           slug: string
           icon?: string | null
+          active?: boolean
           created_at?: string
         }
         Update: {
@@ -31,6 +33,7 @@ export interface Database {
           name?: string
           slug?: string
           icon?: string | null
+          active?: boolean
           created_at?: string
         }
       }
