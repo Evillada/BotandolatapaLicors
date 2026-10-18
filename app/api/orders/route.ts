@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { isAdminRequest } from '@/lib/auth-api'
-import { dbInsert, dbSelect } from '@/lib/supabase/service-role'
+import { dbDeleteMany, dbInsert, dbSelect } from '@/lib/supabase/service-role'
 import type { OrderInsert } from '@/lib/supabase/types'
 
 export async function POST(request: Request) {
@@ -66,6 +66,30 @@ export async function GET(request: Request) {
     return NextResponse.json({ data, count: data.length })
   } catch (error) {
     console.error('[GET /api/orders]', error)
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : 'Error interno' },
+      { status: 500 }
+    )
+  }
+}
+
+export async function DELETE(request: Request) {
+  try {
+    const admin = await isAdminRequest()
+    if (!admin) return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
+
+    const body = await request.json().catch(() => null)
+    const ids: string[] = Array.isArray(body?.ids)
+      ? body.ids.filter((id: unknown): id is string => typeof id === 'string' && id.length > 0)
+      : []
+    if (ids.length === 0) {
+      return NextResponse.json({ error: 'No se enviaron pedidos para eliminar' }, { status: 400 })
+    }
+
+    await dbDeleteMany('orders', ids)
+    return NextResponse.json({ success: true, deleted: ids.length })
+  } catch (error) {
+    console.error('[DELETE /api/orders]', error)
     return NextResponse.json(
       { error: error instanceof Error ? error.message : 'Error interno' },
       { status: 500 }

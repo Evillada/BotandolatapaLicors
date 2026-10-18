@@ -118,3 +118,17 @@ export async function dbDelete(table: string, id: string): Promise<void> {
     throw new Error(`Supabase DELETE ${table}: ${res.status} ${text}`)
   }
 }
+
+export async function dbDeleteMany(table: string, ids: string[]): Promise<void> {
+  const { url, key } = getConfig()
+  const list = ids.map((id) => `"${id.replace(/"/g, '')}"`).join(',')
+  const res = await fetch(`${url}/rest/v1/${table}?id=in.(${encodeURIComponent(list)})`, {
+    method: 'DELETE',
+    headers: { ...serviceHeaders(key), Prefer: 'return=minimal' },
+    cache: 'no-store',
+  })
+  if (!res.ok) {
+    const text = await res.text()
+    throw new Error(`Supabase DELETE ${table}: ${res.status} ${text}`)
+  }
+}

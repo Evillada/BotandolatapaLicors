@@ -46,6 +46,9 @@ export default function AdminOrders() {
   const [newOrder, setNewOrder] = useState<NewOrderForm>(emptyForm)
   const [isCreating, setIsCreating] = useState(false)
   const [selectedProductId, setSelectedProductId] = useState("")
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [isConfirmDeleteOpen, setIsConfirmDeleteOpen] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
 
   useEffect(() => {
     fetchOrders()
@@ -195,6 +198,51 @@ export default function AdminOrders() {
     return matchesSearch && matchesStatus
   })
 
+  const allVisibleSelected =
+    filteredOrders.length > 0 && filteredOrders.every((o) => selectedIds.has(o.id))
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
+
+  const toggleSelectAll = () => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev)
+      if (allVisibleSelected) filteredOrders.forEach((o) => next.delete(o.id))
+      else filteredOrders.forEach((o) => next.add(o.id))
+      return next
+    })
+  }
+
+  const deleteSelected = async () => {
+    const ids = Array.from(selectedIds)
+    if (ids.length === 0) return
+    setIsDeleting(true)
+    try {
+      const res = await fetch("/api/orders", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || "Error al eliminar pedidos")
+      setOrders((prev) => prev.filter((o) => !selectedIds.has(o.id)))
+      if (selectedOrder && selectedIds.has(selectedOrder.id)) setSelectedOrder(null)
+      setSelectedIds(new Set())
+      setIsConfirmDeleteOpen(false)
+      toast.success(ids.length === 1 ? "Pedido eliminado" : `${ids.length} pedidos eliminados`)
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Error al eliminar pedidos")
+    } finally {
+      setIsDeleting(false)
+    }
+  }
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -210,13 +258,24 @@ export default function AdminOrders() {
           <h1 className="text-3xl font-bold text-foreground">Pedidos</h1>
           <p className="text-muted-foreground mt-1">Gestiona los pedidos de tus clientes</p>
         </div>
-        <button
-          onClick={() => { setNewOrder(emptyForm); setIsNewOrderOpen(true) }}
-          className="flex items-center gap-2 bg-gold hover:bg-gold/90 text-background font-semibold px-4 py-2.5 rounded-lg transition-colors"
-        >
-          <Plus className="h-5 w-5" />
-          Nuevo Pedido
-        </button>
+        <div className="flex flex-wrap items-center gap-3">
+          {selectedIds.size > 0 && (
+            <button
+              onClick={() => setIsConfirmDeleteOpen(true)}
+              className="flex items-center gap-2 bg-destructive/10 hover:bg-destructive/20 text-destructive font-semibold px-4 py-2.5 rounded-lg border border-destructive/30 transition-colors"
+            >
+              <Trash2 className="h-5 w-5" />
+              Eliminar ({selectedIds.size})
+            </button>
+          )}
+          <button
+            onClick={() => { setNewOrder(emptyForm); setIsNewOrderOpen(true) }}
+            className="flex items-center gap-2 bg-gold hover:bg-gold/90 text-background font-semibold px-4 py-2.5 rounded-lg transition-colors"
+          >
+            <Plus className="h-5 w-5" />
+            Nuevo Pedido
+          </button>
+        </div>
       </div>
 
       {/* Filters */}
@@ -249,6 +308,15 @@ export default function AdminOrders() {
           <table className="w-full">
             <thead>
               <tr className="border-b border-border bg-muted/30">
+                <th className="py-4 pl-4 pr-0 w-10">
+                  <input
+                    type="checkbox"
+                    checked={allVisibleSelected}
+                    onChange={toggleSelectAll}
+                    aria-label="Seleccionar todos"
+                    className="h-4 w-4 cursor-pointer accent-gold"
+                  />
+                </th>
                 <th className="text-left py-4 px-4 text-sm font-medium text-muted-foreground"># Pedido</th>
                 <th className="text-left py-4 px-4 text-sm font-medium text-muted-foreground">Cliente</th>
                 <th className="text-left py-4 px-4 text-sm font-medium text-muted-foreground">Total</th>
@@ -261,7 +329,19 @@ export default function AdminOrders() {
               {filteredOrders.map((order) => {
                 const status = getStatusOption(order.status)
                 return (
-                  <tr key={order.id} className="border-b border-border/50 last:border-0 hover:bg-muted/20">
+                  <tr
+                    key={order.id}
+                    className={`border-b border-border/50 last:border-0 hover:bg-muted/20 ${selectedIds.has(order.id) ? "bg-destructive/5" : ""}`}
+                  >
+                    <td className="py-4 pl-4 pr-0 w-10">
+                      <input
+                        type="checkbox"
+                        checked={selectedIds.has(order.id)}
+                        onChange={() => toggleSelect(order.id)}
+                        aria-label={`Seleccionar pedido #${order.order_number}`}
+                        className="h-4 w-4 cursor-pointer accent-gold"
+                      />
+                    </td>
                     <td className="py-4 px-4 font-medium text-foreground">#{order.order_number}</td>
                     <td className="py-4 px-4">
                       <p className="font-medium text-foreground">{order.customer_name}</p>
@@ -319,6 +399,42 @@ export default function AdminOrders() {
           </div>
         )}
       </div>
+
+      {/* Confirm Delete Modal */}
+      {isConfirmDeleteOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm">
+          <div className="bg-card border border-border rounded-2xl w-full max-w-md p-6 space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-full bg-destructive/10 flex items-center justify-center">
+                <Trash2 className="h-5 w-5 text-destructive" />
+              </div>
+              <h2 className="text-xl font-bold text-foreground">
+                Eliminar {selectedIds.size === 1 ? "pedido" : `${selectedIds.size} pedidos`}
+              </h2>
+            </div>
+            <p className="text-muted-foreground">
+              Esta acción no se puede deshacer. Los pedidos seleccionados se borrarán permanentemente.
+            </p>
+            <div className="flex gap-3 pt-2">
+              <button
+                onClick={() => setIsConfirmDeleteOpen(false)}
+                disabled={isDeleting}
+                className="flex-1 px-4 py-2.5 rounded-lg border border-border text-foreground hover:bg-muted transition-colors disabled:opacity-50"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={deleteSelected}
+                disabled={isDeleting}
+                className="flex-1 flex items-center justify-center gap-2 bg-destructive hover:bg-destructive/90 text-white font-semibold px-4 py-2.5 rounded-lg transition-colors disabled:opacity-50"
+              >
+                {isDeleting && <Loader2 className="h-4 w-4 animate-spin" />}
+                Eliminar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Order Detail Modal */}
       {selectedOrder && (

@@ -132,8 +132,10 @@ CREATE POLICY "Products are deletable by admins" ON products
   );
 
 -- ORDERS: Public insert, admin read/update
+-- Restringida a service_role: los pedidos solo entran por /api/orders.
+-- Para reabrir: ALTER POLICY "Anyone can create orders" ON orders TO public;
 CREATE POLICY "Anyone can create orders" ON orders
-  FOR INSERT WITH CHECK (true);
+  FOR INSERT TO service_role WITH CHECK (true);
 
 CREATE POLICY "Orders are viewable by admins" ON orders
   FOR SELECT USING (
